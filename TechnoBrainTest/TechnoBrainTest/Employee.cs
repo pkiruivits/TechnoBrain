@@ -12,49 +12,114 @@ namespace TechnoBrainTest
         public int ManagerId { get; set; }
         public double EmployeeSalary { get; set; }
 
-        public Employee EmployeeDetails(string CSVData)
+        public ArreyList EmployeeDetails(string CSVData)
         {
-            Employee employee = null;
+           Employees onewemp = null;
+            string full = System.IO.Path.GetFullPath(CSVData);
+            string file = System.IO.Path.GetFileName(full);
+            string dir = System.IO.Path.GetDirectoryName(full);
 
+            DataTable dtData = new DataTable();
+            string sconnection = "Provider=Microsoft.Jet.OLEDB.4.0;"
+            + "Data Source=\"" + dir + "\\\";"
+            + "Extended Properties=\"text;HDR=NO;FMT=Delimited\"";
 
-            return employee;
-        }
-        public List<Employee> GetPeople(string csvContent)
-        {
-            List<Employee> people = new List<Employee>();
-            csvdata csv = new csvdata(csvContent);
-            foreach (string[] line in csv)
+            string query = "SELECT * FROM [" + file + "]";
+            try
             {
-                Employee person = new Employee();
-                person.Name = line[0];
-                person.TelephoneNo = line[1];
-                people.Add(person);
+                OleDbDataAdapter dAdapter = new OleDbDataAdapter(query, sconnection);
+                dAdapter.Fill(dtData);
+                dAdapter.Dispose();
             }
-            return people;
-        }
-        public class csvdata : List<string[]>
-        {
-            protected string csv = string.Empty;
-            protected string delimiter = ",";
-
-            public csvdata(string csv, string delimiter = "\",\"")
+            catch (Exception ex)
             {
-                this.csv = csv;
-                this.delimiter = delimiter;
+                ;
+               
+            }
 
-                foreach (string line in Regex.Split(csv, System.Environment.NewLine).ToList().Where(s => !string.IsNullOrEmpty(s)))
-                {
-                    string[] realdata = Regex.Split(line, delimiter);
+            DataSet dsOutput = new DataSet();
+            dsOutput.Tables.Add(dtData.Copy());
+            int numrows = dsOutput.Tables[0].Rows.Count;
 
-                    for (int i = 0; i < realdata.Length; i++)
+            int beginAt = 0, maxcolumns = 4;
+            int totalRows = dsOutput.Tables[0].Rows.Count;
+           
+            int currentRow = 0;
+
+            Employees Employee = null;
+            ArrayList mylisst = new ArrayList();
+            List<Employees> mylist = new List<Employees>();
+
+            foreach (DataRow drow in dsOutput.Tables[0].Rows)
+            {
+                currentRow++;
+           
+              
+
+                onewemp = new Employees();
+                
+                    string[] myData;
+                  
+
+                    for (int i = beginAt; i < dsOutput.Tables[0].Columns.Count; i++)
                     {
+                        string myval = drow[i].ToString();
+                        myData = myval.Split(',');
 
-                        realdata[i] = realdata[i].Trim('\"');
+                      
+
+                        for (int j = 0; j < myData.Length; j++)
+                        {
+
+                            int itemNum = j + 1;
+                          
+
+                            if (itemNum <= maxcolumns)
+                            {
+
+
+                                string item = myData[j].ToString();
+                                if (item.Trim() == "-") item = "";
+
+                                switch (j)
+                                {
+                               
+                                    case 0:
+                                        int empid = 0;
+                                        int.TryParse(item, out empid);
+                                        onewemp.EmployeeId = empid;
+                                        break;
+
+                                    case 1:
+                                        int managid = 0;
+                                        int.TryParse(item, out managid);
+                                        onewemp.ManagerId = managid;
+                                        break;
+
+                                
+                                    case 2:
+                                        double salary = 0;
+                                        double.TryParse(item, out salary);
+                                        onewemp.EmployeeSalary = salary;
+                                        break;
+
+
+                                }
+                            }
+                        }
                     }
 
-                    this.Add(realdata);
+                    if (onewemp != null)
+                {
+                  
+                    mylisst.Add(onewemp);
+
                 }
+              
             }
+            return mylisst;
         }
+       
+     
     }
 }
